@@ -10,6 +10,10 @@ const categoriesRouter = require("./app/api/v1/categories/router");
 
 const v1 = "/api/v1/cms";
 
+// middleware
+const notFoundMiddleware = require("./app/middlewares/not-found");
+const handleErrorMiddleware = require("./app/middlewares/handle-error");
+
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -23,5 +27,8 @@ app.get("/", (req, res) => {
 });
 
 app.use(v1, categoriesRouter);
+
+app.use(v1, notFoundMiddleware);
+app.use(v1, handleErrorMiddleware);
 
 module.exports = app;
