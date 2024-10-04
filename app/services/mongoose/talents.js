@@ -1,4 +1,4 @@
-const Talents = require("../../api/v1/talents");
+const Talents = require("../../api/v1/talents/model");
 const { checkingImage } = require("./images");
 
 // import custom error not found dan bad request
@@ -8,8 +8,9 @@ const getAllTalents = async (req) => {
   const { keyword } = req.query;
 
   let condition = {};
+
   if (keyword) {
-    condition = { ...condition, name: { $regex: keyword, $option: "i" } };
+    condition = { ...condition, name: { $regex: keyword, $options: "i" } };
   }
 
   const result = await Talents.find(condition)
@@ -38,7 +39,66 @@ const createTalents = async (req) => {
   return result;
 };
 
+const getOneTalents = async (req) => {
+  const { id } = req.params;
+
+  const result = await Talents.findOne({ _id: id })
+    .populate({
+      path: "image",
+      select: "_id name",
+    })
+    .select("_id name role image");
+
+  if (!result) throw new NotFoundError(`Tidak ada pembicara dengan id : ${id}`);
+
+  return result;
+};
+
+const updateTalents = async (req) => {
+  const { id } = req.params;
+  const { name, role, image } = req.body;
+
+  await checkingImage(image);
+
+  const check = await Talents.findOne({
+    name,
+    _id: { $ne: id },
+  });
+
+  if (check) throw new BadRequestError("pembicara sudah terdaftar");
+
+  const result = await Talents.findOneAndUpdate(
+    { _id: id },
+    { name, image, role },
+    { new: true, runValidators: true }
+  );
+
+  if (!result) throw new NotFoundError(`Tidak ada pembicara dengan id : ${id}`);
+
+  return result;
+};
+
+const deleteTalents = async (req) => {
+  const { id } = req.params;
+
+  const result = await Talents.findByIdAndDelete(id);
+
+  if (!result) throw new NotFoundError(`Tidak ada pembicara dengan id : ${id}`);
+
+  return result;
+};
+
+const checkingTalents = async (id) => {
+  const result = await Talents.findOne({ _id: id });
+
+  if (!result) throw new NotFoundError(`Tidak ada pembicara dengan id : ${id}`);
+};
+
 module.exports = {
   getAllTalents,
   createTalents,
+  getOneTalents,
+  updateTalents,
+  deleteTalents,
+  checkingTalents,
 };
