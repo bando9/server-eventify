@@ -17,7 +17,7 @@ const authenticateUser = async (req, res, next) => {
       throw new UnauthenticatedError("Authentication invalid");
     }
 
-    const payload = isTokenValid({ token });
+    const payload = await isTokenValid({ token });
     console.log("payload");
     console.log(payload);
 
@@ -29,7 +29,9 @@ const authenticateUser = async (req, res, next) => {
       organizer: payload.organizer,
       id: payload.userId,
     };
+    next();
   } catch (err) {
+    console.log("error message: ", err.message);
     next(err);
   }
 };
